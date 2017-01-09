@@ -1,0 +1,45 @@
+\documentclass[a4paper,11pt,twoside,final]{article}
+
+\usepackage[english,francais]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[pdftex]{graphicx}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage[french]{varioref}
+\usepackage{csquotes}
+%\usepackage{lastpage}
+%\usepackage{fancy}
+%\usepackage{fancyhdr}
+
+\newcommand{\reporttitle}{Rapport de projet de troisième année}     % Titre
+\newcommand{\reportauthor}{Loïc \textsc{Gellé}} % Auteur
+\newcommand{\reportsubject}{Projet de troisième année} % Sujet
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\setlength{\parskip}{1ex} % Espace entre les paragraphes
+\usepackage[top=2.5cm, bottom=2.5cm, inner=3.5cm,outer=2.5cm]{geometry}
+
+%\cfoot{\thepage / \pageref{LastPage}}
+
+\hypersetup{
+    pdftitle={\reporttitle},%
+    pdfauthor={\reportauthor},%
+    pdfsubject={\reportsubject},%
+    pdfkeywords={rapport} {projet} {3a}
+}
+
+\begin{document}
+  \include{title}
+  \cleardoublepage % Dans le cas du recto verso, ajoute une page blanche si besoin
+  \tableofcontents % Table des matières
+  \sloppy          % Justification moins stricte : des mots ne dépasseront pas des paragraphes
+  \cleardoublepage
+  \include{remerciements}
+  \cleardoublepage
+  \include{intro}
+  \cleardoublepage
+  \include{partie1}
+  \cleardoublepage
+  \include{concl}
+\end{document}
+
