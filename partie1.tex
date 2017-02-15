@@ -2,7 +2,15 @@
 
 \subsection{Position du problème}
 
-Placeholder.
+Le domaine des assistants de preuve automatiques ou interactifs fait encore l'objet de nombreux sujets de recherche aujourd'hui. Bien que ce champ de recherche soit encore très actif, on peut considérer qu'il arrive à maturité. Les assistants de preuve se développent, à l'instar de Coq qui inclut de plus en plus de tactiques allant vers une automatisation croissante ; leur utilisation se répand et aide à la formalisation de grands théorèmes, comme le théorème des quatre couleurs ou le théorème de Feit et Thompson ; ils s'étendent à d'autres domaines comme la vérification de logiciels et de modèles hybrides, à d'autres logiques comme la Logique Temporelle Linéaire.\\
+
+Malgré ces travaux, les interfaces utilisateurs pour assistants de preuve ont, dans la plupart des cas, constitué un ajout après coup, et les réflexions sur le sujet sont encore embryonnaires. On peut d'ailleurs observer le paysage des assistants de preuve aujourd'hui pour constater la disparité des interfaces utilisateurs et l'absence de cohérence entre elles.\\
+
+Certains logiciels sont tout simplement dépourvus d'interface utilisateur ou offrent une interaction minimale en ligne de commande, comme Psyche dont nous parlerons plus en détail par la suite. Ces logiciels se contentent souvent de lire un fichier d'entrée qui représente un problème et de produire une preuve ou de vérifier une preuve relative à ce problème. Cette pratique est compréhensible dans la mesure où le développement complet d'un assistant de preuve représente déjà un travail conséquent ; le développement d'une interface utilisateur passe souvent au second plan.\\
+
+Les interfaces utilisateur actuelles dans le domaine des assistants de preuve se limitent souvent à des IDE \footnote{Integrated Development Environment} minimalistes qui appliquent l'idée de \textit{gestion de script} : le script de preuve est saisi ou chargé par l'utilisateur qui le fait interpréter partie par partie par l'assistant de preuve. L'avantage de ce paradigme est de permettre facilement à l'utilisateur de défaire ses actions et de voir l'état courant de la preuve.\\
+
+Les interfaces utilisateurs pour assistants de preuve sont néanmoins incomplètes et se heurtent à beaucoup de difficultés. Une des principales est que les théorèmes et les preuves manipulées par les programmes sont des objets abstraits traduits par une syntaxe complexe. Les représenter efficacement et de manière compréhensible pour l'utilisateur est un problème délicat, auquel sont également confrontés d'autres logiciels comme les éditeurs d'équations.
 
 \subsection{Objectifs du projet}
 
