@@ -1,6 +1,8 @@
 *.pdf
 .DS_Store
 
+*.mintedcmd
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof

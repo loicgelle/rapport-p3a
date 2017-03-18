@@ -2,12 +2,85 @@
 
 \subsection{Adaptation de l'outil Psyche}
 
-Placeholder.
+Le logiciel \textbf{Psyche} étant programmé en OCaml, il ne peut pas être utilisé sans adaptation dans un projet en Javascript.\\
 
-\subsection{Mise en place et structure du projet}
+L'outil \textbf{Js of ocaml}, dont la motivation et les principes sont exposés en \cite{vouillon2014bytecode},  permet d'effectuer une partie de cette adaptation. Il s'agit concrètement d'un \textbf{compilateur de bytecode}\footnote{Le bytecode est une représentation intermédiaire d'un langage, qui se situe entre le code source de haut niveau et le langage machine.} OCaml en Javascript. Le choix d'utiliser le bytecode OCaml plutôt que le code source permet d'avoir une indépendance vis-à-vis de la représentation de haut niveau qui peut évoluer assez régulièrement -- le bytecode est généralement considéré comme étant plus stable -- et de profiter des optimisations du compilateur OCaml. Les concepteurs de \textit{Js of ocaml} considèrent de plus que leur \textit{proof of concept} pourrait être appliqué pour produire des compilateurs depuis le bytecode de la Java Virtual Machine, qui est utilisé par de nombreux langages. L'intérêt serait de transformer à faible coût n'importe quel langage écrit en Java, Scala ou JRuby en une API utilisable par des applications Web ! Cependant, cette méthode présente quelques difficultés :\\
 
-Placeholder.
+\begin{itemize}
+\item Les optimisations réalisées par le compilateur OCaml -- en particulier la transformation de fonctions en fermetures -- rendent difficiles la conversion des fonctions et la délinéarisation du bytecode. Les structures de contrôle offertes par Javascript -- qui n'incluent pas, en particulier, d'instruction \texttt{goto} -- ne permettent en effet pas de délinéariser facilement le bytecode ; 
+\item Le bytecode d'OCaml est un \textbf{langage de bas niveau} ; en particulier, les informations de type sont assez pauvres et ne permettent pas une conversion efficace vers des types de haut niveau.
+\end{itemize}
 
-\subsection{Méthode de travail}
+\textit{Js of ocaml} relève ces défis avec succès et permet effectivement de convertir un bytecode OCaml en code Javascript. Pour ce faire, \textit{Js of ocaml} utilise une première conversion vers une représentation intermédiaire en forme SSA\footnote{\textit{Static Single Assignment} : il s'agit d'une représentation intermédiaire dans laquelle chaque variable n'est définie qu'une seule fois.}, qui permet d'effectuer quelques optimisations -- analyse d'échappement, analyse d'atteignabilité et élimination de code mort, ... -- et des adaptations au langage cible -- il faut par exemple prendre en compte le fait que Javascript attribue la valeur NaN\footnote{Not A Number} lors d'une division par zéro, alors que OCaml lève une exception. Les analyses de l'article \cite{vouillon2014bytecode} montrent que \textit{Js of ocaml} produit en moyenne un code Javascript d'une taille comparable au bytecode OCaml mais -- ce qui peut paraître surprenant -- d'exécution plus rapide.\\
 
-Placeholder.
+Cependant, le problème des types subsiste : l'outil renvoie des valeurs qui sont en pratique inutilisables dans un code Javascript, car dépourvues de type et de structure. L'outil \textit{ppx\_jsobject\_conv}\footnote{Le code est disponible ici : \url{https://github.com/little-arhat/ppx_jsobject_conv}} permet de contourner ce problème. Il permet de générer, pour certains types OCaml choisis, des \textbf{fonctions de conversion depuis et vers des objets Javascript utilisables}. En pratique, les informations initiales de types sont encodées dans ces fonctions et ne sont donc pas perdues lors de la compilation du code OCaml en bytecode. Les valeurs OCaml suivantes :
+
+\begin{minted}{ocaml}
+(* OCaml *)
+type myType = PairInt of int * int | Str of string
+
+let myVal1 = PairInt(3, 15)
+let myVal2 = Str "hello world"
+\end{minted}
+
+sont converties en les tableaux Javascript suivants :
+
+\begin{minted}{javascript}
+// Javascript
+var myVal1 = ["Pair", [3, 15]];
+var myVal2 = ["Str", ["hello world"]];
+\end{minted}
+
+Un petit travail de parsing permet ensuite d'obtenir les valeurs sous forme d'objets, lesquels sont plus naturels à manipuler en Javascript :
+
+\begin{minted}{javascript}
+// Javascript
+var myVal1 = {
+	Pair: [3, 15]
+};
+var myVal2 = {
+	Str: "hello world"
+};
+\end{minted}
+
+\subsection{Mise en place et structure du back-end}
+
+Le travail de mise en place, côté OCaml, nécessite de créer un \textbf{point d'entrée du programme} spécialement destiné à l'application Javascript. Ce fichier \texttt{mainjs.ml} a simplement pour but d'exposer quelques fonctions essentielles destinées à l'application : une fonction qui permet de parser une chaîne de caractères Javascript en un problème, les fonctions du top-level qui lancent le noyau sur ce problème ainsi qu'une fonction qui permet d'afficher dans la console Javascript des informations de débogage.\\
+
+Une fois le noyau lancé sur un problème, l'interaction ne passe plus par le point d'entrée du programme. A ce moment là, le noyau de Psyche communique quasiment directement avec le front-end Javascript. \textbf{Un middleware ad-hoc côté OCaml} permet de rendre cette communication possible, notamment en transformant les types de données renvoyés par le noyau pour les rendre utilisables par l'application Javascript, et inversement en dirigeant le noyau selon les réponses renvoyées par le front-end.
+
+\begin{minted}{ocaml}
+(* OCaml *)
+(* Extrait de portfolio/pluginsG/JS/myPlugin.mli *)
+type jsreturntype =
+    | Unit
+    | FocusFormula of int
+    | FocusRestore
+    | FocusConsistencyCheck
+    | Bool of bool
+                [@@deriving jsobject]
+
+type jsinsertcoin =
+  | JSNotify
+  | JSAskFocus
+  | JSAskSide
+  | JSStop [@@deriving jsobject]
+
+type jsargs = (DataStructures.UF.formulaWstring list)
+    * (DataStructures.UF.formulaWstring list) * (string list)
+    * string * string * (bool option) [@@deriving jsobject]
+
+type jsoutput =
+  | JSJackpot of bool
+  | JSInsertCoin of jsinsertcoin * jsargs option [@@deriving jsobject]
+\end{minted}
+
+Le type \texttt{jsoutput} décrit les objets renvoyés par le middleware au front-end, tandis que le type \texttt{jsreturntype} spécifie le format de la réponse renvoyée par le front-end. La communication entre le front-end et le back-end est décrite par la figure \ref{communication}.
+
+\begin{figure}[!ht]
+    \center
+    \includegraphics[width=0.8\textwidth]{./images/II_2_communication.png}
+    \caption{\label{communication} La communication entre le front-end et le back-end.}
+\end{figure}
+
+Le type \texttt{jsargs} contient des informations sur le séquent, qui permettent au front-end et à l'utilisateur d'interpréter la réponse du noyau. On trouve par exemple parmi ces informations l'ensemble des formules sur lesquelles on peut se focaliser, l'ensemble des formules sur lesquelles on s'est déjà focalisé, ou encore l'adresse du noeud courant dans l'espace de recherche.
